@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Web3 from "web3";
 import { formatAddress } from "../utils/formatAddress";
 import { abi } from "../utils/contract/abiUSDT";
@@ -8,6 +8,18 @@ export default function useConnectMetaMask() {
   const [address, setAddress] = useState("");
   const [balance, setBalance] = useState("");
   const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    const connected = sessionStorage.getItem("connected");
+    const address = sessionStorage.getItem("address");
+    const balance = sessionStorage.getItem("balance");
+
+    if (connected) {
+      setConnected(connected);
+      setAddress(address);
+      setBalance(balance);
+    }
+  }, [])
 
   const connectMetaMask = async () => {
     try {
@@ -38,6 +50,7 @@ export default function useConnectMetaMask() {
         ) {
           const selectedAddress = accounts[0];
           setAddress(formatAddress(selectedAddress));
+          sessionStorage.setItem('address', `${formatAddress(selectedAddress)}`);
 
           const usdtContract = new web3.eth.Contract(abi, contract);
           const usdtBalance = await usdtContract.methods
@@ -52,7 +65,9 @@ export default function useConnectMetaMask() {
           );
 
           setBalance(roundedUsdtBalance);
+          sessionStorage.setItem('balance', `${roundedUsdtBalance}`);
           setConnected(true);
+          sessionStorage.setItem("connected", "true");
         } else {
           console.error("MetaMask не предоставил действительный адрес");
         }
@@ -66,6 +81,7 @@ export default function useConnectMetaMask() {
 
   const disconnectMetaMask = async () => {
     setConnected(false);
+    sessionStorage.clear();
   };
 
   const requestSwitchToBscNetwork = async () => {
